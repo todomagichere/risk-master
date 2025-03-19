@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useLocation } from "wouter";
 import { ArrowLeft, Plus, Save, MinusCircle, Trophy, Flag, Shield, Sword } from "lucide-react";
 import { GameMap } from "@/components/game-map";
+import { CardCarousel } from "@/components/card-carousel";
 
 export default function GamePage({ params }: { params: { id: string } }) {
   const { toast } = useToast();
@@ -257,23 +258,22 @@ export default function GamePage({ params }: { params: { id: string } }) {
                   <h3 className="font-medium mb-2">
                     Cartas ({player.cards.length})
                   </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {player.cards.map(card => (
-                      <div
-                        key={card.id}
-                        className="px-3 py-1 bg-muted rounded-md text-sm flex items-center gap-2"
-                      >
-                        {card.type}
-                        <button
-                          onClick={() => removeCard(player, card.id)}
-                          className="text-destructive hover:text-destructive/80"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                    <Select onValueChange={(value) => addCard(player, value as any)}>
-                      <SelectTrigger className="w-[180px]">
+                  <CardCarousel 
+                    cards={player.cards}
+                    onRemove={(cardId) => removeCard(player, cardId)}
+                  />
+                  <div className="mt-4">
+                    <Select 
+                      value=""
+                      onValueChange={(value) => {
+                        addCard(player, value as any);
+                        const selectTrigger = document.querySelector(`[data-radix-select-trigger][data-player="${player.id}"]`);
+                        if (selectTrigger) {
+                          (selectTrigger as any)._radixSelect.value = '';
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="w-[180px]" data-player={player.id}>
                         <SelectValue placeholder="Agregar carta..." />
                       </SelectTrigger>
                       <SelectContent>

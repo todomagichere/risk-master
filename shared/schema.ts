@@ -1,55 +1,89 @@
+
 import { z } from "zod";
 
-// Territorio
+export const GameType = z.enum(["secret_mission", "classic", "two_players", "capital"]);
+
+export const TroopType = z.enum(["infantry", "artillery"]);
+
+export const CardType = z.enum(["infantry", "cavalry", "artillery", "wild"]);
+
 export const Territory = z.object({
   id: z.string(),
   name: z.string(),
-  points: z.number(),
-  units: z.number().default(0),
-  ownerId: z.string().optional()
+  continent: z.string(),
+  troops: z.array(z.object({
+    type: TroopType,
+    quantity: z.number(),
+  })),
+  ownerId: z.string().optional(),
+  isHeadquarters: z.boolean().optional(),
+  adjacentTerritories: z.array(z.string())
 });
 
-export type Territory = z.infer<typeof Territory>;
-
-// Carta
 export const Card = z.object({
   id: z.string(),
-  type: z.enum(["infantry", "cavalry", "artillery", "wild"]),
+  type: CardType,
   territoryId: z.string().optional()
 });
 
-export type Card = z.infer<typeof Card>;
+export const Battle = z.object({
+  id: z.string(),
+  turnId: z.string(),
+  attackerId: z.string(),
+  defenderId: z.string(),
+  fromTerritoryId: z.string(),
+  toTerritoryId: z.string(),
+  attackerDice: z.array(z.number()),
+  defenderDice: z.array(z.number()),
+  troopsLostAttacker: z.number(),
+  troopsLostDefender: z.number(),
+  territoryConquered: z.boolean()
+});
 
-// Jugador
+export const Turn = z.object({
+  id: z.string(),
+  playerId: z.string(),
+  reinforcements: z.number(),
+  battles: z.array(Battle),
+  cardDrawn: z.boolean().default(false),
+  cardsTraded: z.boolean().default(false)
+});
+
 export const Player = z.object({
   id: z.string(),
   name: z.string(),
   color: z.string(),
   cards: z.array(Card),
-  territories: z.array(Territory),
-  points: z.number()
+  mission: z.string().optional(),
+  eliminated: z.boolean().default(false)
 });
 
-export type Player = z.infer<typeof Player>;
-
-// Partida
 export const Game = z.object({
   id: z.string(),
   name: z.string(),
   date: z.string(),
-  status: z.enum(["active", "finished"]),
+  type: GameType,
+  status: z.enum(["setup", "active", "finished"]),
   players: z.array(Player),
-  currentTurn: z.number()
+  currentTurn: z.number(),
+  turns: z.array(Turn),
+  cardsTraded: z.number().default(0)
 });
 
+export type Territory = z.infer<typeof Territory>;
+export type Card = z.infer<typeof Card>;
+export type Battle = z.infer<typeof Battle>;
+export type Turn = z.infer<typeof Turn>;
+export type Player = z.infer<typeof Player>;
 export type Game = z.infer<typeof Game>;
 
-// Schema para crear nueva partida
 export const CreateGameSchema = Game.omit({ 
   id: true,
   players: true,
   currentTurn: true,
-  status: true 
+  status: true,
+  turns: true,
+  cardsTraded: true
 }).extend({
   players: z.array(z.object({
     name: z.string().min(1, "El nombre es requerido"),
